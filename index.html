@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Feedback Intelligence System — Power BI Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ============================================
+           CSS VARIABLES & DESIGN TOKENS
+           ============================================ */
+        :root {
+            --primary: #2563EB;
+            --primary-dark: #1D4ED8;
+            --primary-darker: #1E40AF;
+            --primary-light: #DBEAFE;
+            --primary-lighter: #EFF6FF;
+            --green: #059669;
+            --green-dark: #047857;
+            --green-light: #D1FAE5;
+            --green-lighter: #ECFDF5;
+            --red: #DC2626;
+            --red-dark: #B91C1C;
+            --red-light: #FEE2E2;
+            --red-lighter: #FEF2F2;
+            --orange: #D97706;
+            --orange-light: #FEF3C7;
+            --orange-lighter: #FFFBEB;
+            --purple: #7C3AED;
+            --purple-light: #EDE9FE;
+            --teal: #0D9488;
+            --teal-light: #CCFBF1;
+            --cyan: #0891B2;
+            --cyan-light: #CFFAFE;
+            --pink: #DB2777;
+            --pink-light: #FCE7F3;
+            --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB; --gray-400: #9CA3AF; --gray-500: #6B7280;
+            --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.08), 0 4px 6px rgba(0,0,0,0.04);
+            --shadow-xl: 0 20px 25px rgba(0,0,0,0.1), 0 8px 10px rgba(0,0,0,0.04);
+            --radius: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-800);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============================================
+           POWER BI TOP BAR
+           ============================================ */
+        .pbi-topbar {
+            background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+        }
+        .pbi-logo { display:flex; align-items:center; gap:10px; color:white; font-size:13.5px; font-weight:600; }
+        .pbi-logo i { color:#F2C811; font-size:18px; }
+        .pbi-logo .sep { opacity:0.25; margin:0 6px; }
+        .pbi-logo .title { opacity:0.92; }
+        .pbi-right { display:flex; align-items:center; gap:18px; }
+        .pbi-right span { color:rgba(255,255,255,0.6); font-size:12px; }
+        .pbi-btn { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1); color:white; padding:5px 14px; border-radius:5px; cursor:pointer; font-size:12px; font-family:inherit; display:flex; align-items:center; gap:6px; transition:all 0.2s; }
+        .pbi-btn:hover { background:rgba(255,255,255,0.18); }
+
+        /* ============================================
+           NAVIGATION TABS
+           ============================================ */
+        .nav-bar {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            position: sticky; top: 46px; z-index: 999;
+            box-shadow: var(--shadow-sm);
+            overflow-x: auto;
+        }
+        .nav-tab {
+            padding: 13px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-500);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .nav-tab:hover { color: var(--primary); background: var(--primary-lighter); }
+        .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+        .nav-tab i { font-size: 13px; }
+
+        /* ============================================
+           FILTER BAR
+           ============================================ */
+        .filter-bar {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .filter-label { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.6px; display:flex; align-items:center; gap:5px; }
+        .filter-label i { color: var(--primary); font-size: 12px; }
+        .filter-select {
+            padding: 6px 30px 6px 10px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: inherit;
+            color: var(--gray-700);
+            background: white;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%236B7280' d='M2.5 4l2.5 2.5L7.5 4'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            cursor: pointer;
+            min-width: 150px;
+            transition: all 0.2s;
+        }
+        .filter-select:hover { border-color: var(--primary); }
+        .filter-select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light); }
+        .filter-select.active-filter { border-color: var(--primary); background-color: var(--primary-lighter); }
+        .filter-reset { margin-left:auto; padding:6px 12px; border:1px solid var(--gray-300); border-radius:6px; background:white; color:var(--gray-600); font-size:11px; font-family:inherit; cursor:pointer; display:flex; align-items:center; gap:5px; transition:all 0.2s; }
+        .filter-reset:hover { background:var(--gray-50); border-color:var(--gray-400); }
+
+        /* ============================================
+           PAGE CONTAINER
+           ============================================ */
+        .page { display:none; padding:24px; max-width:1480px; margin:0 auto; }
+        .page.active { display:block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .page-header { margin-bottom: 24px; }
+        .page-title { font-size:22px; font-weight:800; color:var(--gray-900); letter-spacing:-0.3px; }
+        .page-subtitle { font-size:13px; color:var(--gray-500); margin-top:4px; }
+
+        /* ============================================
+           GRID SYSTEM
+           ============================================ */
+        .g { display:grid; gap:16px; margin-bottom:20px; }
+        .g-6 { grid-template-columns: repeat(6,1fr); }
+        .g-5 { grid-template-columns: repeat(5,1fr); }
+        .g-4 { grid-template-columns: repeat(4,1fr); }
+        .g-3 { grid-template-columns: repeat(3,1fr); }
+        .g-2 { grid-template-columns: repeat(2,1fr); }
+        .g-21 { grid-template-columns: 2fr 1fr; }
+        .g-12 { grid-template-columns: 1fr 2fr; }
+        .g-31 { grid-template-columns: 3fr 1fr; }
+        .g-13 { grid-template-columns: 1fr 3fr; }
+        .span-2 { grid-column: span 2; }
+        .span-3 { grid-column: span 3; }
+
+        /* ============================================
+           CARD
+           ============================================ */
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: box-shadow 0.25s;
+        }
+        .card:hover { box-shadow: var(--shadow-md); }
+        .card-hd {
+            padding: 14px 18px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .card-tt { font-size:12.5px; font-weight:700; color:var(--gray-700); text-transform:uppercase; letter-spacing:0.3px; display:flex; align-items:center; gap:7px; }
+        .card-tt i { font-size:13px; color:var(--primary); }
+        .badge { font-size:10.5px; padding:3px 10px; border-radius:12px; font-weight:700; }
+        .badge-green { background:var(--green-light); color:var(--green); }
+        .badge-blue { background:var(--primary-light); color:var(--primary); }
+        .badge-orange { background:var(--orange-light); color:var(--orange); }
+        .badge-red { background:var(--red-light); color:var(--red); }
+        .badge-purple { background:var(--purple-light); color:var(--purple); }
+        .card-bd { padding: 18px; }
+
+        /* ============================================
+           KPI CARD
+           ============================================ */
+        .kpi {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow);
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.25s;
+        }
+        .kpi::after { content:''; position:absolute; top:0; left:0; right:0; height:3.5px; }
+        .kpi-blue::after { background:var(--primary); }
+        .kpi-green::after { background:var(--green); }
+        .kpi-purple::after { background:var(--purple); }
+        .kpi-orange::after { background:var(--orange); }
+        .kpi-teal::after { background:var(--teal); }
+        .kpi-red::after { background:var(--red); }
+        .kpi-cyan::after { background:var(--cyan); }
+        .kpi-pink::after { background:var(--pink); }
+        .kpi:hover { transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+        .kpi-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+        .kpi-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+        .kpi-icon.blue { background:var(--primary-light); color:var(--primary); }
+        .kpi-icon.green { background:var(--green-light); color:var(--green); }
+        .kpi-icon.purple { background:var(--purple-light); color:var(--purple); }
+        .kpi-icon.orange { background:var(--orange-light); color:var(--orange); }
+        .kpi-icon.teal { background:var(--teal-light); color:var(--teal); }
+        .kpi-icon.red { background:var(--red-light); color:var(--red); }
+        .kpi-icon.cyan { background:var(--cyan-light); color:var(--cyan); }
+        .kpi-icon.pink { background:var(--pink-light); color:var(--pink); }
+        .kpi-lbl { font-size:11px; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+        .kpi-val { font-size:26px; font-weight:800; color:var(--gray-900); line-height:1; margin-bottom:6px; }
+        .kpi-sub { font-size:11.5px; font-weight:500; display:flex; align-items:center; gap:4px; }
+        .kpi-sub.up { color:var(--green); }
+        .kpi-sub.neutral { color:var(--gray-400); }
+        .kpi-sub.info { color:var(--primary); }
+
+        /* ============================================
+           CHART WRAPPERS
+           ============================================ */
+        .ch { position:relative; width:100%; }
+        .ch-sm { height:200px; }
+        .ch-md { height:280px; }
+        .ch-lg { height:340px; }
+        .ch-xl { height:400px; }
+
+        /* ============================================
+           MODEL COMPARISON CARDS
+           ============================================ */
+        .model-card {
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            text-align: center;
+            border: 2px solid var(--gray-200);
+            background: var(--gray-50);
+            transition: all 0.3s;
+            position: relative;
+        }
+        .model-card.winner {
+            border-color: var(--green);
+            background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+        }
+        .model-card.winner .crown {
+            position: absolute;
+            top: -1px; right: -1px;
+            background: var(--green);
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 5px 14px;
+            border-radius: 0 10px 0 10px;
+            letter-spacing: 0.5px;
+        }
+        .model-nm { font-size:14px; font-weight:700; color:var(--gray-700); margin-bottom:14px; display:flex; align-items:center; justify-content:center; gap:8px; }
+        .model-acc { font-size:44px; font-weight:800; line-height:1; margin-bottom:6px; }
+        .model-card.winner .model-acc { color:var(--green); }
+        .model-acc-lbl { font-size:12px; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:16px; }
+        .model-bar { height:8px; background:var(--gray-200); border-radius:4px; overflow:hidden; margin-bottom:18px; }
+        .model-bar-fill { height:100%; border-radius:4px; transition:width 1.5s ease; }
+        .model-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+        .model-metric { text-align:center; }
+        .model-metric .v { font-size:18px; font-weight:700; }
+        .model-metric .l { font-size:10.5px; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.3px; }
+
+        /* ============================================
+           CONFUSION MATRIX
+           ============================================ */
+        .cm-grid { display:grid; grid-template-columns:auto repeat(3,1fr); gap:0; margin:10px auto; max-width:380px; }
+        .cm-cell { padding:12px 8px; text-align:center; font-size:14px; font-weight:700; border:1px solid rgba(255,255,255,0.8); }
+        .cm-header { font-size:11px; font-weight:700; color:var(--gray-600); text-transform:uppercase; padding:8px; text-align:center; background:var(--gray-50); }
+        .cm-row-label { font-size:11px; font-weight:700; color:var(--gray-600); text-transform:uppercase; padding:8px 12px; text-align:right; background:var(--gray-50); display:flex; align-items:center; justify-content:flex-end; }
+        .cm-axis-label { text-align:center; font-size:11px; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; margin-top:8px; }
+
+        /* ============================================
+           CLUSTER PROFILE CARDS
+           ============================================ */
+        .cluster-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow);
+            padding: 18px;
+            transition: all 0.25s;
+        }
+        .cluster-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+        .cluster-hd { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+        .cluster-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .cluster-nm { font-size:13.5px; font-weight:800; color:var(--gray-800); }
+        .cluster-cnt { font-size:22px; font-weight:800; color:var(--primary); margin-bottom:2px; }
+        .cluster-pct { font-size:11.5px; color:var(--gray-500); margin-bottom:10px; }
+        .cluster-theme { font-size:11.5px; font-weight:700; color:var(--gray-600); margin-bottom:8px; }
+        .cluster-tags { display:flex; flex-wrap:wrap; gap:5px; }
+        .cluster-tag { font-size:10.5px; padding:3px 9px; border-radius:20px; font-weight:600; }
+
+        /* ============================================
+           WORD CLOUD
+           ============================================ */
+        .wc { padding:16px; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px; min-height:170px; }
+        .wc-w { display:inline-block; padding:3px 7px; border-radius:4px; font-weight:700; cursor:default; transition:transform 0.2s; }
+        .wc-w:hover { transform:scale(1.18); }
+
+        /* ============================================
+           KEYWORD BAR
+           ============================================ */
+        .kw-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+        .kw-label { font-size:12px; font-weight:600; color:var(--gray-600); width:80px; text-align:right; flex-shrink:0; }
+        .kw-bar { flex:1; height:22px; background:var(--gray-100); border-radius:4px; overflow:hidden; position:relative; }
+        .kw-fill { height:100%; border-radius:4px; display:flex; align-items:center; padding-left:8px; font-size:10.5px; font-weight:700; color:white; transition:width 1s ease; }
+        .kw-val { font-size:11px; font-weight:600; color:var(--gray-500); width:30px; text-align:right; flex-shrink:0; }
+
+        /* ============================================
+           HEATMAP TABLE
+           ============================================ */
+        .ht { width:100%; border-collapse:collapse; font-size:12px; }
+        .ht th { padding:10px 12px; text-align:left; font-weight:700; color:var(--gray-600); background:var(--gray-50); border-bottom:2px solid var(--gray-200); font-size:11px; text-transform:uppercase; letter-spacing:0.3px; }
+        .ht td { padding:7px 10px; border-bottom:1px solid var(--gray-100); text-align:center; }
+        .ht td:first-child { text-align:left; font-weight:700; color:var(--gray-700); }
+        .ht-cell { display:inline-block; padding:3px 8px; border-radius:4px; font-weight:700; min-width:40px; font-size:11px; }
+
+        /* ============================================
+           METRIC TABLE
+           ============================================ */
+        .mt { width:100%; border-collapse:collapse; }
+        .mt th { padding:11px 14px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--gray-500); background:var(--gray-50); border-bottom:2px solid var(--gray-200); }
+        .mt td { padding:11px 14px; font-size:13px; border-bottom:1px solid var(--gray-100); }
+        .mt tr:hover td { background:var(--primary-lighter); }
+
+        /* ============================================
+           INSIGHT ITEMS
+           ============================================ */
+        .ins { display:flex; gap:14px; padding:14px 0; border-bottom:1px solid var(--gray-100); }
+        .ins:last-child { border-bottom:none; }
+        .ins-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+        .ins-title { font-size:13px; font-weight:700; color:var(--gray-800); margin-bottom:3px; }
+        .ins-text { font-size:12px; color:var(--gray-500); line-height:1.55; }
+
+        /* ============================================
+           PROGRESS BARS
+           ============================================ */
+        .prog { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+        .prog-lbl { font-size:12px; font-weight:600; color:var(--gray-600); width:60px; flex-shrink:0; text-align:right; }
+        .prog-bar { flex:1; height:22px; background:var(--gray-100); border-radius:5px; overflow:hidden; }
+        .prog-fill { height:100%; border-radius:5px; display:flex; align-items:center; justify-content:flex-end; padding-right:8px; font-size:10.5px; font-weight:700; color:white; transition:width 1.2s ease; }
+        .prog-val { font-size:11px; font-weight:600; color:var(--gray-500); width:45px; flex-shrink:0; }
+
+        /* ============================================
+           SECTION DIVIDER
+           ============================================ */
+        .sec-title { font-size:14px; font-weight:800; color:var(--gray-800); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+        .sec-title i { color:var(--primary); }
+        .sec-title .line { flex:1; height:1px; background:var(--gray-200); margin-left:10px; }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .footer { background:white; border-top:1px solid var(--gray-200); padding:14px 24px; display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--gray-400); margin-top:40px; }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width:1280px) {
+            .g-6 { grid-template-columns:repeat(3,1fr); }
+            .g-5 { grid-template-columns:repeat(3,1fr); }
+        }
+        @media (max-width:1024px) {
+            .g-6,.g-5,.g-4 { grid-template-columns:repeat(2,1fr); }
+            .g-3 { grid-template-columns:repeat(2,1fr); }
+        }
+        @media (max-width:768px) {
+            .g-6,.g-5,.g-4,.g-3,.g-2,.g-21,.g-12,.g-31,.g-13 { grid-template-columns:1fr; }
+            .span-2,.span-3 { grid-column:span 1; }
+            .nav-bar { padding:0 12px; }
+            .page { padding:14px; }
+        }
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+        @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        .anim { animation: slideUp 0.45s ease forwards; }
+        .d1{animation-delay:.05s;opacity:0} .d2{animation-delay:.1s;opacity:0} .d3{animation-delay:.15s;opacity:0}
+        .d4{animation-delay:.2s;opacity:0} .d5{animation-delay:.25s;opacity:0} .d6{animation-delay:.3s;opacity:0}
+        .d7{animation-delay:.35s;opacity:0} .d8{animation-delay:.4s;opacity:0}
+
+        /* Tooltips */
+        [data-tip] { position:relative; }
+        [data-tip]::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:var(--gray-800); color:white; font-size:11px; padding:5px 10px; border-radius:6px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity 0.2s; z-index:10; }
+        [data-tip]:hover::after { opacity:1; }
+
+        /* Print */
+        @media print { .pbi-topbar,.nav-bar,.filter-bar { position:static; } .page { display:block!important; } .kpi:hover,.card:hover,.cluster-card:hover { transform:none; } }
+    </style>
+</head>
+<body>
+
+<!-- ============================================
+     POWER BI TOP BAR
+     ============================================ -->
+<div class="pbi-topbar">
+    <div class="pbi-logo">
+        <i class="fas fa-chart-pie"></i>
+        <span>Power BI</span>
+        <span class="sep">|</span>
+        <span class="title">Customer Feedback Intelligence System</span>
+    </div>
+    <div class="pbi-right">
+        <button class="pbi-btn" onclick="window.print()"><i class="fas fa-print"></i> Export</button>
+        <button class="pbi-btn" onclick="location.reload()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        <span><i class="far fa-clock"></i> <span id="updateTime"></span></span>
+        <span><i class="far fa-user-circle"></i> Executive View</span>
+    </div>
+</div>
+
+<!-- ============================================
+     NAVIGATION
+     ============================================ -->
+<div class="nav-bar">
+    <div class="nav-tab active" data-page="executive" onclick="go('executive')"><i class="fas fa-tachometer-alt"></i> Executive Summary</div>
+    <div class="nav-tab" data-page="models" onclick="go('models')"><i class="fas fa-brain"></i> Model Performance</div>
+    <div class="nav-tab" data-page="segmentation" onclick="go('segmentation')"><i class="fas fa-users"></i> Customer Segmentation</div>
+    <div class="nav-tab" data-page="keywords" onclick="go('keywords')"><i class="fas fa-tags"></i> Keyword Intelligence</div>
+    <div class="nav-tab" data-page="sentiment" onclick="go('sentiment')"><i class="fas fa-heart"></i> Sentiment Analytics</div>
+    <div class="nav-tab" data-page="insights" onclick="go('insights')"><i class="fas fa-lightbulb"></i> Business Insights</div>
+</div>
+
+<!-- ============================================
+     FILTER BAR
+     ============================================ -->
+<div class="filter-bar">
+    <div class="filter-label"><i class="fas fa-filter"></i> Filters</div>
+    <select class="filter-select" id="fCluster" onchange="applyFilter(this)">
+        <option value="all">All Clusters</option>
+        <option value="0">Cluster 0 — General Apparel</option>
+        <option value="1">Cluster 1 — Sizing Issues</option>
+        <option value="2">Cluster 2 — Jeans & Comfort</option>
+        <option value="3">Cluster 3 — Dresses & Fashion</option>
+        <option value="4">Cluster 4 — Tops & Style</option>
+    </select>
+    <select class="filter-select" id="fSentiment" onchange="applyFilter(this)">
+        <option value="all">All Sentiments</option>
+        <option value="positive">Positive (17,435)</option>
+        <option value="neutral">Neutral (2,823)</option>
+        <option value="negative">Negative (2,370)</option>
+    </select>
+    <select class="filter-select" id="fRating" onchange="applyFilter(this)">
+        <option value="all">All Ratings</option>
+        <option value="5">★★★★★ (12,536)</option>
+        <option value="4">★★★★☆ (4,899)</option>
+        <option value="3">★★★☆☆ (2,823)</option>
+        <option value="2">★★☆☆☆ (1,549)</option>
+        <option value="1">★☆☆☆☆ (821)</option>
+    </select>
+    <select class="filter-select" id="fDept" onchange="applyFilter(this)">
+        <option value="all">All Departments</option>
+        <option value="tops">Tops (10,048)</option>
+        <option value="dresses">Dresses (6,145)</option>
+        <option value="bottoms">Bottoms (3,744)</option>
+        <option value="intimate">Intimate (1,652)</option>
+        <option value="jackets">Jackets (1,029)</option>
+        <option value="trend">Trend (118)</option>
+    </select>
+    <select class="filter-select" id="fCategory" onchange="applyFilter(this)">
+        <option value="all">All Categories</option>
+        <option value="dresses">Dresses (6,145)</option>
+        <option value="knits">Knits (4,626)</option>
+        <option value="blouses">Blouses (2,983)</option>
+        <option value="sweaters">Sweaters (1,380)</option>
+        <option value="pants">Pants (1,350)</option>
+        <option value="jeans">Jeans (1,104)</option>
+    </select>
+    <button class="filter-reset" onclick="resetFilters()"><i class="fas fa-undo"></i> Reset All</button>
+</div>
+
+
+<!-- ====================================================================
+     PAGE 1: EXECUTIVE SUMMARY
+     ==================================================================== -->
+<div class="page active" id="pg-executive">
+    <div class="page-header">
+        <div class="page-title">Executive Summary</div>
+        <div class="page-subtitle">Customer Feedback Intelligence — Key Performance Indicators & Strategic Overview</div>
+    </div>
+
+    <!-- KPI ROW -->
+    <div class="g g-6">
+        <div class="kpi kpi-blue anim d1">
+            <div class="kpi-top"><div class="kpi-icon blue"><i class="fas fa-comments"></i></div></div>
+            <div class="kpi-lbl">Total Reviews Analyzed</div>
+            <div class="kpi-val">22,628</div>
+            <div class="kpi-sub info"><i class="fas fa-database"></i> From 23,486 original records</div>
+        </div>
+        <div class="kpi kpi-green anim d2">
+            <div class="kpi-top"><div class="kpi-icon green"><i class="fas fa-thumbs-up"></i></div></div>
+            <div class="kpi-lbl">Positive Sentiment</div>
+            <div class="kpi-val">77.05%</div>
+            <div class="kpi-sub up"><i class="fas fa-smile"></i> 17,435 positive reviews</div>
+        </div>
+        <div class="kpi kpi-purple anim d3">
+            <div class="kpi-top"><div class="kpi-icon purple"><i class="fas fa-star"></i></div></div>
+            <div class="kpi-lbl">Recommendation Rate</div>
+            <div class="kpi-val">81.88%</div>
+            <div class="kpi-sub up"><i class="fas fa-check"></i> 18,527 recommend</div>
+        </div>
+        <div class="kpi kpi-orange anim d4">
+            <div class="kpi-top"><div class="kpi-icon orange"><i class="fas fa-trophy"></i></div></div>
+            <div class="kpi-lbl">Best Model Accuracy</div>
+            <div class="kpi-val">82.10%</div>
+            <div class="kpi-sub info"><i class="fas fa-robot"></i> Logistic Regression</div>
+        </div>
+        <div class="kpi kpi-teal anim d5">
+            <div class="kpi-top"><div class="kpi-icon teal"><i class="fas fa-layer-group"></i></div></div>
+            <div class="kpi-lbl">Largest Cluster</div>
+            <div class="kpi-val">8,932</div>
+            <div class="kpi-sub info"><i class="fas fa-circle" style="font-size:7px"></i> Cluster 0 — 39.47%</div>
+        </div>
+        <div class="kpi kpi-cyan anim d6">
+            <div class="kpi-top"><div class="kpi-icon cyan"><i class="fas fa-chart-line"></i></div></div>
+            <div class="kpi-lbl">Average Rating</div>
+            <div class="kpi-val">4.18<span style="font-size:14px; color:var(--gray-400);"> / 5</span></div>
+            <div class="kpi-sub up"><i class="fas fa-star" style="font-size:9px"></i> 77.05% rated 4+ stars</div>
+        </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="g g-2">
+        <div class="card anim d2">
+            <div class="card-hd">
+                <div class="card-tt"><i class="fas fa-chart-bar"></i> Customer Segments (K-Means Clustering)</div>
+                <span class="badge badge-blue">5 Clusters</span>
+            </div>
+            <div class="card-bd"><div class="ch ch-md"><canvas id="exCluster"></canvas></div></div>
+        </div>
+        <div class="card anim d3">
+            <div class="card-hd">
+                <div class="card-tt"><i class="fas fa-chart-pie"></i> Sentiment Distribution</div>
+                <span class="badge badge-green">77% Positive</span>
+            </div>
+            <div class="card-bd"><div class="ch ch-md"><canvas id="exSentiment"></canvas></div></div>
+        </div>
+    </div>
+
+    <!-- FINDINGS ROW -->
+    <div class="g g-3">
+        <div class="card anim d4">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-store"></i> Top Product Categories</div></div>
+            <div class="card-bd">
+                <div class="ch ch-md"><canvas id="exProducts"></canvas></div>
+            </div>
+        </div>
+        <div class="card anim d5">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-building"></i> Rating by Department</div></div>
+            <div class="card-bd">
+                <div class="ch ch-md"><canvas id="exDeptRating"></canvas></div>
+            </div>
+        </div>
+        <div class="card anim d6">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-search"></i> Key Business Findings</div></div>
+            <div class="card-bd" style="padding:14px;">
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--green-light);color:var(--green);"><i class="fas fa-shopping-bag"></i></div>
+                    <div><div class="ins-title">Tops is the Most Reviewed Department</div><div class="ins-text">10,048 reviews (44.4%) — the largest department by volume, indicating high customer engagement with tops.</div></div>
+                </div>
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--primary-light);color:var(--primary);"><i class="fas fa-heart"></i></div>
+                    <div><div class="ins-title">Positive Sentiment Dominates</div><div class="ins-text">77.05% of all reviews are positive. Only 10.47% are negative, showing strong overall customer satisfaction.</div></div>
+                </div>
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--orange-light);color:var(--orange);"><i class="fas fa-ruler"></i></div>
+                    <div><div class="ins-title">Sizing Issues are the #1 Pain Point</div><div class="ins-text">Cluster 1 (3,961 reviews) is entirely about sizing and fit — keywords: size, small, fit, run, ordered, large.</div></div>
+                </div>
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--purple-light);color:var(--purple);"><i class="fas fa-chart-bar"></i></div>
+                    <div><div class="ins-title">Bottoms Get the Highest Ratings</div><div class="ins-text">Bottoms department averages 4.28/5, followed by Intimate (4.27) and Jackets (4.25). Trend has the lowest at 3.84.</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ====================================================================
+     PAGE 2: MODEL PERFORMANCE
+     ==================================================================== -->
+<div class="page" id="pg-models">
+    <div class="page-header">
+        <div class="page-title">Model Performance</div>
+        <div class="page-subtitle">Sentiment Classification — Machine Learning Model Comparison (TF-IDF with 5,000 features)</div>
+    </div>
+
+    <!-- MODEL CARDS -->
+    <div class="g g-2">
+        <div class="model-card winner anim d1">
+            <div class="crown"><i class="fas fa-crown"></i> BEST MODEL</div>
+            <div class="model-nm"><i class="fas fa-chart-line" style="color:var(--green)"></i> Logistic Regression</div>
+            <div class="model-acc">82.10%</div>
+            <div class="model-acc-lbl">Classification Accuracy</div>
+            <div class="model-bar"><div class="model-bar-fill" style="width:82.1%;background:linear-gradient(90deg,#059669,#34D399);"></div></div>
+            <div class="model-metrics">
+                <div class="model-metric"><div class="v" style="color:var(--green)">0.64</div><div class="l">Macro Precision</div></div>
+                <div class="model-metric"><div class="v" style="color:var(--green)">0.54</div><div class="l">Macro Recall</div></div>
+                <div class="model-metric"><div class="v" style="color:var(--green)">0.57</div><div class="l">Macro F1</div></div>
+            </div>
+        </div>
+        <div class="model-card anim d2">
+            <div class="model-nm"><i class="fas fa-tree" style="color:var(--primary)"></i> Random Forest</div>
+            <div class="model-acc" style="color:var(--primary)">78.72%</div>
+            <div class="model-acc-lbl">Classification Accuracy</div>
+            <div class="model-bar"><div class="model-bar-fill" style="width:78.72%;background:linear-gradient(90deg,#2563EB,#60A5FA);"></div></div>
+            <div class="model-metrics">
+                <div class="model-metric"><div class="v" style="color:var(--primary)">0.68</div><div class="l">Macro Precision</div></div>
+                <div class="model-metric"><div class="v" style="color:var(--primary)">0.39</div><div class="l">Macro Recall</div></div>
+                <div class="model-metric"><div class="v" style="color:var(--primary)">0.39</div><div class="l">Macro F1</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACCURACY COMPARISON + RADAR -->
+    <div class="g g-2">
+        <div class="card anim d3">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-chart-bar"></i> Accuracy Comparison</div><span class="badge badge-green">+3.38% gap</span></div>
+            <div class="card-bd"><div class="ch ch-md"><canvas id="mdAccChart"></canvas></div></div>
+        </div>
+        <div class="card anim d4">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-spider"></i> Per-Class Performance Radar</div></div>
+            <div class="card-bd"><div class="ch ch-md"><canvas id="mdRadar"></canvas></div></div>
+        </div>
+    </div>
+
+    <!-- CLASSIFICATION REPORTS -->
+    <div class="g g-2">
+        <div class="card anim d5">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-table"></i> Logistic Regression — Classification Report</div><span class="badge badge-green">Best</span></div>
+            <div class="card-bd" style="padding:0;overflow-x:auto;">
+                <table class="mt">
+                    <thead><tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>Support</th></tr></thead>
+                    <tbody>
+                        <tr><td><span style="color:var(--red)">●</span> <strong>Negative</strong></td><td>0.62</td><td>0.43</td><td>0.51</td><td>474</td></tr>
+                        <tr><td><span style="color:var(--orange)">●</span> <strong>Neutral</strong></td><td>0.44</td><td>0.21</td><td>0.29</td><td>565</td></tr>
+                        <tr><td><span style="color:var(--green)">●</span> <strong>Positive</strong></td><td>0.86</td><td>0.97</td><td>0.92</td><td>3,487</td></tr>
+                        <tr style="background:var(--gray-50);font-weight:700;"><td>Accuracy</td><td colspan="2"></td><td>0.82</td><td>4,526</td></tr>
+                        <tr style="background:var(--gray-50);"><td><strong>Weighted Avg</strong></td><td>0.79</td><td>0.82</td><td>0.79</td><td>4,526</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card anim d6">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-table"></i> Random Forest — Classification Report</div></div>
+            <div class="card-bd" style="padding:0;overflow-x:auto;">
+                <table class="mt">
+                    <thead><tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>Support</th></tr></thead>
+                    <tbody>
+                        <tr><td><span style="color:var(--red)">●</span> <strong>Negative</strong></td><td>0.67</td><td>0.14</td><td>0.23</td><td>474</td></tr>
+                        <tr><td><span style="color:var(--orange)">●</span> <strong>Neutral</strong></td><td>0.59</td><td>0.04</td><td>0.07</td><td>565</td></tr>
+                        <tr><td><span style="color:var(--green)">●</span> <strong>Positive</strong></td><td>0.79</td><td>1.00</td><td>0.88</td><td>3,487</td></tr>
+                        <tr style="background:var(--gray-50);font-weight:700;"><td>Accuracy</td><td colspan="2"></td><td>0.79</td><td>4,526</td></tr>
+                        <tr style="background:var(--gray-50);"><td><strong>Weighted Avg</strong></td><td>0.75</td><td>0.79</td><td>0.71</td><td>4,526</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONFUSION MATRICES -->
+    <div class="g g-2">
+        <div class="card anim d7">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-th"></i> LR Confusion Matrix</div></div>
+            <div class="card-bd">
+                <div class="cm-axis-label">PREDICTED</div>
+                <div class="cm-grid" id="cmLR"></div>
+                <div class="cm-axis-label" style="writing-mode:vertical-lr;position:absolute;left:4px;top:50%;transform:translateY(-50%) rotate(180deg);font-size:10px;color:var(--gray-400);">ACTUAL</div>
+            </div>
+        </div>
+        <div class="card anim d8">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-th"></i> RF Confusion Matrix</div></div>
+            <div class="card-bd">
+                <div class="cm-axis-label">PREDICTED</div>
+                <div class="cm-grid" id="cmRF"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATA SPLIT INFO -->
+    <div class="g g-4">
+        <div class="kpi kpi-blue anim d5"><div class="kpi-lbl">Total Samples</div><div class="kpi-val">22,628</div><div class="kpi-sub info"><i class="fas fa-database"></i> TF-IDF (5,000 features)</div></div>
+        <div class="kpi kpi-green anim d6"><div class="kpi-lbl">Training Set</div><div class="kpi-val">18,102</div><div class="kpi-sub info"><i class="fas fa-graduation-cap"></i> 80% split</div></div>
+        <div class="kpi kpi-purple anim d7"><div class="kpi-lbl">Test Set</div><div class="kpi-val">4,526</div><div class="kpi-sub info"><i class="fas fa-vial"></i> 20% split</div></div>
+        <div class="kpi kpi-orange anim d8"><div class="kpi-lbl">Sentiment Classes</div><div class="kpi-val">3</div><div class="kpi-sub info"><i class="fas fa-tags"></i> Positive / Neutral / Negative</div></div>
+    </div>
+</div>
+
+
+<!-- ====================================================================
+     PAGE 3: CUSTOMER SEGMENTATION
+     ==================================================================== -->
+<div class="page" id="pg-segmentation">
+    <div class="page-header">
+        <div class="page-title">Customer Segmentation</div>
+        <div class="page-subtitle">K-Means Clustering (k=5, random_state=42) — 22,628 Customer Reviews Segmented</div>
+    </div>
+
+    <!-- CLUSTER PROFILE CARDS -->
+    <div class="g g-5" id="clusterCards"></div>
+
+    <!-- CHARTS -->
+    <div class="g g-2">
+        <div class="card anim d3">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-chart-bar"></i> Cluster Distribution</div><span class="badge badge-blue">K-Means</span></div>
+            <div class="card-bd"><div class="ch ch-lg"><canvas id="sgBar"></canvas></div></div>
+        </div>
+        <div class="card anim d4">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-chart-pie"></i> Cluster Share</div></div>
+            <div class="card-bd"><div class="ch ch-lg"><canvas id="sgDonut"></canvas></div></div>
+        </div>
+    </div>
+
+    <!-- CUSTOMER BEHAVIOR SUMMARY -->
+    <div class="card anim d5">
+        <div class="card-hd"><div class="card-tt"><i class="fas fa-users-cog"></i> Customer Behavior Summary</div></div>
+        <div class="card-bd" style="padding:0;overflow-x:auto;">
+            <table class="mt">
+                <thead><tr><th>Cluster</th><th>Size</th><th>Share</th><th>Theme</th><th>Top Keywords (from TF-IDF centroids)</th><th>Behavior Profile</th></tr></thead>
+                <tbody>
+                    <tr><td><span style="color:#2563EB">●</span> <strong>Cluster 0</strong></td><td>8,932</td><td>39.47%</td><td>General Apparel</td><td>like, color, love, sweater, look, shirt, fit, fabric, wear, soft</td><td>Broad product enthusiasts — value color variety, fabric quality, and overall look. Largest and most engaged segment.</td></tr>
+                    <tr><td><span style="color:#059669">●</span> <strong>Cluster 1</strong></td><td>3,961</td><td>17.51%</td><td>Sizing Issues</td><td>size, small, fit, run, ordered, im, large, medium, wear, would</td><td>Customers focused on sizing problems — frequent mentions of items running small/large, ordering issues, and fit concerns.</td></tr>
+                    <tr><td><span style="color:#F59E0B">●</span> <strong>Cluster 2</strong></td><td>2,823</td><td>12.48%</td><td>Jeans & Comfort</td><td>great, jean, love, fit, look, pant, comfortable, color, wear, perfect</td><td>Jeans and pants buyers who prioritize comfort and perfect fit. High satisfaction with descriptors like "great" and "perfect."</td></tr>
+                    <tr><td><span style="color:#7C3AED">●</span> <strong>Cluster 3</strong></td><td>4,037</td><td>17.84%</td><td>Dresses & Fashion</td><td>dress, fit, love, size, wear, like, beautiful, im, flattering, look</td><td>Dress shoppers valuing beauty and flattering fit. Second largest cluster with strong emotional language ("love," "beautiful").</td></tr>
+                    <tr><td><span style="color:#DC2626">●</span> <strong>Cluster 4</strong></td><td>2,875</td><td>12.71%</td><td>Tops & Style</td><td>top, love, fit, color, look, like, wear, cute, size, fabric</td><td>Tops-focused customers who care about style, color variety, and cuteness. Fabric quality also matters to this segment.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- ====================================================================
+     PAGE 4: KEYWORD INTELLIGENCE
+     ==================================================================== -->
+<div class="page" id="pg-keywords">
+    <div class="page-header">
+        <div class="page-title">Keyword Intelligence</div>
+        <div class="page-subtitle">Top Keywords Extracted from TF-IDF Cluster Centroids — Ordered by Feature Importance</div>
+    </div>
+
+    <!-- WORD CLOUDS -->
+    <div class="sec-title"><i class="fas fa-cloud"></i> Word Clouds by Cluster <span class="line"></span></div>
+    <div class="g g-3">
+        <div class="card anim d1">
+            <div class="card-hd"><div class="card-tt" style="color:#2563EB"><i class="fas fa-circle" style="font-size:8px"></i> Cluster 0 — General Apparel</div><span class="badge badge-blue">8,932</span></div>
+            <div class="wc" id="wc0"></div>
+        </div>
+        <div class="card anim d2">
+            <div class="card-hd"><div class="card-tt" style="color:#059669"><i class="fas fa-circle" style="font-size:8px"></i> Cluster 1 — Sizing Issues</div><span class="badge badge-green">3,961</span></div>
+            <div class="wc" id="wc1"></div>
+        </div>
+        <div class="card anim d3">
+            <div class="card-hd"><div class="card-tt" style="color:#F59E0B"><i class="fas fa-circle" style="font-size:8px"></i> Cluster 2 — Jeans & Comfort</div><span class="badge badge-orange">2,823</span></div>
+            <div class="wc" id="wc2"></div>
+        </div>
+    </div>
+    <div class="g g-2" style="max-width:66.66%;">
+        <div class="card anim d4">
+            <div class="card-hd"><div class="card-tt" style="color:#7C3AED"><i class="fas fa-circle" style="font-size:8px"></i> Cluster 3 — Dresses & Fashion</div><span class="badge badge-purple">4,037</span></div>
+            <div class="wc" id="wc3"></div>
+        </div>
+        <div class="card anim d5">
+            <div class="card-hd"><div class="card-tt" style="color:#DC2626"><i class="fas fa-circle" style="font-size:8px"></i> Cluster 4 — Tops & Style</div><span class="badge badge-red">2,875</span></div>
+            <div class="wc" id="wc4"></div>
+        </div>
+    </div>
+
+    <!-- KEYWORD FREQUENCY BARS -->
+    <div class="sec-title" style="margin-top:8px"><i class="fas fa-chart-bar"></i> Keyword Frequency — Horizontal Bar Charts <span class="line"></span></div>
+    <div class="g g-3" id="kwBarsContainer"></div>
+
+    <!-- KEYWORD HEATMAP -->
+    <div class="sec-title" style="margin-top:8px"><i class="fas fa-fire"></i> Cross-Cluster Keyword Presence <span class="line"></span></div>
+    <div class="card anim d6">
+        <div class="card-hd"><div class="card-tt"><i class="fas fa-th"></i> Keyword × Cluster Heatmap</div></div>
+        <div class="card-bd" style="padding:0;overflow-x:auto;"><table class="ht" id="kwHeatmap"><thead><tr><th>Keyword</th><th>C0</th><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>Clusters Present</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- CLUSTER DESCRIPTIONS -->
+    <div class="sec-title" style="margin-top:8px"><i class="fas fa-clipboard-list"></i> Auto-Generated Cluster Descriptions <span class="line"></span></div>
+    <div class="g g-5" id="kwDescriptions"></div>
+</div>
+
+
+<!-- ====================================================================
+     PAGE 5: SENTIMENT ANALYTICS
+     ==================================================================== -->
+<div class="page" id="pg-sentiment">
+    <div class="page-header">
+        <div class="page-title">Sentiment Analytics</div>
+        <div class="page-subtitle">Customer Sentiment Classification Based on Rating (≥4 = Positive, 3 = Neutral, ≤2 = Negative)</div>
+    </div>
+
+    <!-- SENTIMENT KPIs -->
+    <div class="g g-4">
+        <div class="kpi kpi-green anim d1"><div class="kpi-top"><div class="kpi-icon green"><i class="fas fa-smile"></i></div></div><div class="kpi-lbl">Positive Reviews</div><div class="kpi-val" style="color:var(--green)">17,435</div><div class="kpi-sub up"><i class="fas fa-arrow-up"></i> 77.05% of all reviews</div></div>
+        <div class="kpi kpi-orange anim d2"><div class="kpi-top"><div class="kpi-icon orange"><i class="fas fa-meh"></i></div></div><div class="kpi-lbl">Neutral Reviews</div><div class="kpi-val" style="color:var(--orange)">2,823</div><div class="kpi-sub neutral"><i class="fas fa-minus"></i> 12.48% of all reviews</div></div>
+        <div class="kpi kpi-red anim d3"><div class="kpi-top"><div class="kpi-icon red"><i class="fas fa-frown"></i></div></div><div class="kpi-lbl">Negative Reviews</div><div class="kpi-val" style="color:var(--red)">2,370</div><div class="kpi-sub neutral"><i class="fas fa-arrow-down"></i> 10.47% of all reviews</div></div>
+        <div class="kpi kpi-blue anim d4"><div class="kpi-top"><div class="kpi-icon blue"><i class="fas fa-chart-line"></i></div></div><div class="kpi-lbl">Avg Rating</div><div class="kpi-val">4.18</div><div class="kpi-sub up"><i class="fas fa-star" style="font-size:9px"></i> Out of 5.0</div></div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="g g-2">
+        <div class="card anim d2">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-chart-pie"></i> Sentiment Distribution</div><span class="badge badge-green">Positive Dominant</span></div>
+            <div class="card-bd"><div class="ch ch-lg"><canvas id="snDonut"></canvas></div></div>
+        </div>
+        <div class="card anim d3">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-chart-bar"></i> Rating Distribution</div></div>
+            <div class="card-bd">
+                <div class="prog"><span class="prog-lbl">5 ★</span><div class="prog-bar"><div class="prog-fill" style="width:55.4%;background:var(--green)">55.4%</div></div><span class="prog-val">12,536</span></div>
+                <div class="prog"><span class="prog-lbl">4 ★</span><div class="prog-bar"><div class="prog-fill" style="width:21.65%;background:#34D399">21.7%</div></div><span class="prog-val">4,899</span></div>
+                <div class="prog"><span class="prog-lbl">3 ★</span><div class="prog-bar"><div class="prog-fill" style="width:12.48%;background:var(--orange)">12.5%</div></div><span class="prog-val">2,823</span></div>
+                <div class="prog"><span class="prog-lbl">2 ★</span><div class="prog-bar"><div class="prog-fill" style="width:6.85%;background:#FB923C">6.8%</div></div><span class="prog-val">1,549</span></div>
+                <div class="prog"><span class="prog-lbl">1 ★</span><div class="prog-bar"><div class="prog-fill" style="width:3.63%;background:var(--red)">3.6%</div></div><span class="prog-val">821</span></div>
+                <div style="margin-top:14px;padding:12px;background:var(--gray-50);border-radius:8px;font-size:12px;color:var(--gray-600)">
+                    <strong>Insight:</strong> 77.05% of all reviews are rated 4 or 5 stars. Only 10.47% of reviews are rated 1 or 2 stars, aligning with the sentiment classification results.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RATING VS SENTIMENT & RECOMMENDATION -->
+    <div class="g g-2">
+        <div class="card anim d4">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-exchange-alt"></i> Rating vs. Sentiment Mapping</div></div>
+            <div class="card-bd"><div class="ch ch-md"><canvas id="snRatingSentiment"></canvas></div></div>
+        </div>
+        <div class="card anim d5">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-thumbs-up"></i> Recommendation Rate Analysis</div></div>
+            <div class="card-bd">
+                <div class="ch ch-sm"><canvas id="snRecommend"></canvas></div>
+                <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div style="padding:12px;background:var(--green-lighter);border-radius:8px;text-align:center;">
+                        <div style="font-size:22px;font-weight:800;color:var(--green)">18,527</div>
+                        <div style="font-size:11px;color:var(--green-dark);font-weight:600">Recommended (81.88%)</div>
+                    </div>
+                    <div style="padding:12px;background:var(--red-lighter);border-radius:8px;text-align:center;">
+                        <div style="font-size:22px;font-weight:800;color:var(--red)">4,101</div>
+                        <div style="font-size:11px;color:var(--red-dark);font-weight:600">Not Recommended (18.12%)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEPARTMENT SENTIMENT -->
+    <div class="card anim d6">
+        <div class="card-hd"><div class="card-tt"><i class="fas fa-building"></i> Average Rating by Department</div></div>
+        <div class="card-bd"><div class="ch ch-md"><canvas id="snDeptBar"></canvas></div></div>
+    </div>
+</div>
+
+
+<!-- ====================================================================
+     PAGE 6: BUSINESS INSIGHTS
+     ==================================================================== -->
+<div class="page" id="pg-insights">
+    <div class="page-header">
+        <div class="page-title">Business Insights Panel</div>
+        <div class="page-subtitle">AI-Generated Strategic Insights from Customer Feedback Analysis</div>
+    </div>
+
+    <div class="g g-2">
+        <!-- KEY FINDINGS -->
+        <div class="card anim d1">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-search-plus"></i> Key Findings from Data</div><span class="badge badge-blue">Data-Driven</span></div>
+            <div class="card-bd">
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--primary-light);color:var(--primary)"><i class="fas fa-users"></i></div>
+                    <div><div class="ins-title">Largest Segment: Cluster 0 (39.47%)</div><div class="ins-text">8,932 customers form the largest segment. Their reviews focus on general apparel attributes: <strong>color, love, sweater, look, shirt, fabric, soft</strong>. This group values product variety, visual appeal, and fabric quality — the core brand experience.</div></div>
+                </div>
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--red-light);color:var(--red)"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div><div class="ins-title">Critical Pain Point: Sizing & Fit (Cluster 1)</div><div class="ins-text">3,961 customers (17.51%) focus on sizing issues with keywords: <strong>size, small, fit, run, ordered, large, medium</strong>. This cluster likely drives the highest return rates and customer dissatisfaction. It represents the single biggest improvement opportunity.</div></div>
+                </div>
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--green-light);color:var(--green)"><i class="fas fa-heart"></i></div>
+                    <div><div class="ins-title">Satisfaction Drivers: Jeans & Dresses</div><div class="ins-text">Clusters 2 (Jeans, 12.48%) and 3 (Dresses, 17.84%) show strong satisfaction with positive keywords: <strong>great, love, comfortable, perfect, beautiful, flattering</strong>. Together they represent 30.32% of all customers. Dresses alone account for 6,145 reviews — the most reviewed product class.</div></div>
+                </div>
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--orange-light);color:var(--orange)"><i class="fas fa-chart-bar"></i></div>
+                    <div><div class="ins-title">Department Performance Gap</div><div class="ins-text">Bottoms (4.28/5) and Intimate (4.27/5) outperform Tops (4.16/5) and Dresses (4.14/5) despite Tops having 2.6x more reviews. Trend department scores lowest (3.84/5) with only 118 reviews — a niche that may need repositioning.</div></div>
+                </div>
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--purple-light);color:var(--purple)"><i class="fas fa-robot"></i></div>
+                    <div><div class="ins-title">ML Model Performance</div><div class="ins-text">Logistic Regression (82.10%) outperforms Random Forest (78.72%) in overall accuracy. LR also shows better macro F1 (0.57 vs 0.39), especially for minority classes. RF achieves near-perfect positive recall (1.00) but fails on neutral (0.04 recall) — essentially ignoring minority classes.</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECOMMENDATIONS -->
+        <div class="card anim d2">
+            <div class="card-hd"><div class="card-tt"><i class="fas fa-lightbulb"></i> Strategic Recommendations</div><span class="badge badge-green">Actionable</span></div>
+            <div class="card-bd">
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--red-light);color:var(--red)"><i class="fas fa-ruler-combined"></i></div>
+                    <div><div class="ins-title">🔴 URGENT: Address Sizing Issues</div><div class="ins-text">17.51% of customers talk about sizing problems. Implement: (1) Enhanced size guides with body measurements, (2) Customer-reported "true-to-size" voting system, (3) Size recommendation engine using customer profile data. <strong>Target: Reduce sizing-related negative reviews by 40%.</strong></div></div>
+                </div>
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--green-light);color:var(--green)"><i class="fas fa-gem"></i></div>
+                    <div><div class="ins-title">🟢 Double Down on Quality & Fabric</div><div class="ins-text">Cluster 0 (39.47%) cares about fabric and quality. Highlight material composition, care instructions, and quality certifications in product listings. Add "fabric feel" ratings to product pages. This addresses the largest customer segment.</div></div>
+                </div>
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--primary-light);color:var(--primary)"><i class="fas fa-expand-arrows-alt"></i></div>
+                    <div><div class="ins-title">🔵 Expand Successful Categories</div><div class="ins-text">Jeans (avg rating 4.35) and Dresses (6,145 reviews) are star performers. Expand jeans line with more comfort-focused options. For dresses, leverage "beautiful" and "flattering" messaging in marketing campaigns.</div></div>
+                </div>
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--orange-light);color:var(--orange)"><i class="fas fa-palette"></i></div>
+                    <div><div class="ins-title">🟡 Invest in Color & Style Variety</div><div class="ins-text">Multiple clusters mention "color" as a top keyword (Clusters 0, 2, 4). Offer more color variants for bestselling items. Use cluster-specific language: "cute" for tops shoppers, "flattering" for dress shoppers, "comfortable" for jeans buyers.</div></div>
+                </div>
+                <div class="ins">
+                    <div class="ins-icon" style="background:var(--teal-light);color:var(--teal)"><i class="fas fa-cogs"></i></div>
+                    <div><div class="ins-title">🔷 Deploy LR Model + Address Class Imbalance</div><div class="ins-text">Deploy Logistic Regression for real-time sentiment monitoring. Address class imbalance (77% positive vs 10% negative) with SMOTE or class weighting to improve neutral/negative detection. Current neutral recall is only 0.21.</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMPACT CHART -->
+    <div class="card anim d3">
+        <div class="card-hd"><div class="card-tt"><i class="fas fa-rocket"></i> Impact vs. Effort Matrix</div></div>
+        <div class="card-bd"><div class="ch ch-xl"><canvas id="inImpact"></canvas></div></div>
+    </div>
+
+    <!-- SUMMARY KPIs -->
+    <div class="g g-4">
+        <div class="kpi kpi-green anim d4"><div class="kpi-icon green" style="margin-bottom:8px"><i class="fas fa-check-double"></i></div><div class="kpi-lbl">Actionable Insights</div><div class="kpi-val">5</div></div>
+        <div class="kpi kpi-red anim d5"><div class="kpi-icon red" style="margin-bottom:8px"><i class="fas fa-fire"></i></div><div class="kpi-lbl">Critical Issues</div><div class="kpi-val">1</div><div class="kpi-sub" style="color:var(--red)"><i class="fas fa-exclamation-circle"></i> Sizing & Fit</div></div>
+        <div class="kpi kpi-blue anim d6"><div class="kpi-icon blue" style="margin-bottom:8px"><i class="fas fa-chart-line"></i></div><div class="kpi-lbl">Growth Opportunities</div><div class="kpi-val">3</div></div>
+        <div class="kpi kpi-purple anim d7"><div class="kpi-icon purple" style="margin-bottom:8px"><i class="fas fa-bullseye"></i></div><div class="kpi-lbl">Segments Analyzed</div><div class="kpi-val">5</div></div>
+    </div>
+</div>
+
+
+<!-- FOOTER -->
+<div class="footer">
+    <div><i class="fas fa-chart-pie" style="color:#F2C811;margin-right:5px"></i> Power BI — Customer Feedback Intelligence System</div>
+    <div>Dataset: Women's Clothing E-Commerce Reviews (23,486 records → 22,628 processed)</div>
+    <div>Dashboard v2.0 | Executive View</div>
+</div>
+
+
+<!-- ====================================================================
+     JAVASCRIPT — ALL ACTUAL PROJECT DATA
+     ==================================================================== -->
+<script>
+// ============================================
+// NAVIGATION
+// ============================================
+function go(id){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('pg-'+id).classList.add('active');
+    document.querySelector(`.nav-tab[data-page="${id}"]`).classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ============================================
+// FILTERS
+// ============================================
+function applyFilter(el){
+    el.classList.toggle('active-filter', el.value !== 'all');
+}
+function resetFilters(){
+    document.querySelectorAll('.filter-select').forEach(s=>{s.value='all';s.classList.remove('active-filter');});
+}
+
+// ============================================
+// TIMESTAMP
+// ============================================
+document.getElementById('updateTime').textContent = new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+// ============================================
+// CHART.JS DEFAULTS
+// ============================================
+Chart.defaults.font.family = "'Segoe UI', sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#6B7280';
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+Chart.defaults.plugins.legend.labels.padding = 14;
+
+// ============================================
+// ACTUAL PROJECT DATA
+// ============================================
+const COLORS = ['#2563EB','#059669','#F59E0B','#7C3AED','#DC2626'];
+const CL_NAMES = ['C0 General','C1 Sizing','C2 Jeans','C3 Dresses','C4 Tops'];
+const CL_FULL = ['Cluster 0 — General Apparel','Cluster 1 — Sizing Issues','Cluster 2 — Jeans & Comfort','Cluster 3 — Dresses & Fashion','Cluster 4 — Tops & Style'];
+const CL_DATA = [8932, 3961, 2823, 4037, 2875];
+const TOTAL = 22628;
+
+// Actual cluster keywords from notebook cell 95
+const CL_KEYWORDS = {
+    0: ['like','color','love','sweater','look','shirt','fit','fabric','wear','soft'],
+    1: ['size','small','fit','run','ordered','im','large','medium','wear','would'],
+    2: ['great','jean','love','fit','look','pant','comfortable','color','wear','perfect'],
+    3: ['dress','fit','love','size','wear','like','beautiful','im','flattering','look'],
+    4: ['top','love','fit','color','look','like','wear','cute','size','fabric']
+};
+
+const CL_THEMES = ['General Apparel','Sizing Issues','Jeans & Comfort','Dresses & Fashion','Tops & Style'];
+const CL_COLORS_LIGHT = ['#DBEAFE','#D1FAE5','#FEF3C7','#EDE9FE','#FEE2E2'];
+
+// Actual sentiment data from notebook cell 53
+const SENT = {Positive:17435, Neutral:2823, Negative:2370};
+// Actual rating data from preprocessed dataset
+const RATINGS = {1:821, 2:1549, 3:2823, 4:4899, 5:12536};
+// Actual department data
+const DEPTS = {Tops:10048, Dresses:6145, Bottoms:3744, Intimate:1652, Jackets:1029, Trend:118};
+// Actual department ratings from cell 108
+const DEPT_RATINGS = {Bottoms:4.279, Intimate:4.271, Jackets:4.254, Tops:4.158, Dresses:4.139, Trend:3.839};
+// Actual top product categories from cell 105
+const PRODUCTS = {Dresses:6145,Knits:4626,Blouses:2983,Sweaters:1380,Pants:1350,Jeans:1104,'Fine gauge':1059,Skirts:903,Jackets:683,Lounge:669};
+// Actual recommendation data from cell 102
+const RECOMMEND = {yes:18527, no:4101};
+// Actual sentiment × department cross-tabulation from the analysis
+const SENT_BY_DEPT = {
+    Tops:{Negative:1096, Neutral:1300, Positive:7652},
+    Dresses:{Negative:681, Neutral:830, Positive:4634},
+    Bottoms:{Negative:317, Neutral:407, Positive:2938},  // Note: this was named 'Bottoms' in preprocessed data
+    Intimate:{Negative:147, Neutral:177, Positive:1329},
+    Jackets:{Negative:108, Neutral:90, Positive:804},
+    Trend:{Negative:21, Neutral:19, Positive:78}
+};
+// Actual recommendation rate by sentiment
+const RECOMMEND_BY_SENT = {
+    Negative: {notRec: 95.40, rec: 4.60},
+    Neutral: {notRec: 58.55, rec: 41.45},
+    Positive: {notRec: 1.07, rec: 98.93}
+};
+// Actual sentiment mapping: Rating >= 4 → Positive, Rating == 3 → Neutral, Rating <= 2 → Negative
+const RATING_SENTIMENT_MAP = {
+    1: {sentiment:'Negative', count:821},
+    2: {sentiment:'Negative', count:1549},
+    3: {sentiment:'Neutral', count:2823},
+    4: {sentiment:'Positive', count:4908},  // Actual from cross-tab (slightly differs from 4899 due to NaN handling)
+    5: {sentiment:'Positive', count:12527}  // Actual from cross-tab
+};
+
+// ============================================
+// PAGE 1: EXECUTIVE CHARTS
+// ============================================
+new Chart(document.getElementById('exCluster'),{
+    type:'bar',
+    data:{labels:CL_NAMES,datasets:[{label:'Customers',data:CL_DATA,backgroundColor:COLORS.map(c=>c+'CC'),borderColor:COLORS,borderWidth:2,borderRadius:8,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y.toLocaleString()} customers (${(ctx.parsed.y/TOTAL*100).toFixed(1)}%)`}}},scales:{y:{beginAtZero:true,grid:{color:'#F3F4F6'},ticks:{callback:v=>(v/1000)+'K'}},x:{grid:{display:false}}}}
+});
+
+new Chart(document.getElementById('exSentiment'),{
+    type:'doughnut',
+    data:{labels:['Positive (17,435)','Neutral (2,823)','Negative (2,370)'],datasets:[{data:[17435,2823,2370],backgroundColor:['#059669','#F59E0B','#DC2626'],borderWidth:3,borderColor:'#fff',hoverOffset:10}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${(ctx.parsed/TOTAL*100).toFixed(1)}%`}}}}
+});
+
+new Chart(document.getElementById('exProducts'),{
+    type:'bar',
+    data:{labels:Object.keys(PRODUCTS),datasets:[{data:Object.values(PRODUCTS),backgroundColor:'rgba(37,99,235,0.75)',borderColor:'#2563EB',borderWidth:1,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.x.toLocaleString()+' reviews'}}},scales:{x:{grid:{color:'#F3F4F6'}},y:{grid:{display:false}}}}
+});
+
+new Chart(document.getElementById('exDeptRating'),{
+    type:'bar',
+    data:{labels:Object.keys(DEPT_RATINGS),datasets:[{data:Object.values(DEPT_RATINGS),backgroundColor:['#059669','#10B981','#34D399','#60A5FA','#3B82F6','#F59E0B'],borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'Avg Rating: '+ctx.parsed.y.toFixed(2)}}},scales:{y:{min:3.5,max:4.5,grid:{color:'#F3F4F6'},ticks:{callback:v=>v.toFixed(1)}},x:{grid:{display:false}}}}
+});
+
+// ============================================
+// PAGE 2: MODEL CHARTS
+// ============================================
+new Chart(document.getElementById('mdAccChart'),{
+    type:'bar',
+    data:{labels:['Logistic Regression','Random Forest'],datasets:[{label:'Accuracy (%)',data:[82.10,78.72],backgroundColor:['rgba(5,150,105,0.85)','rgba(37,99,235,0.85)'],borderColor:['#059669','#2563EB'],borderWidth:2,borderRadius:10,borderSkipped:false,barThickness:55}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'Accuracy: '+ctx.parsed.x+'%'}}},scales:{x:{min:70,max:90,grid:{color:'#F3F4F6'},ticks:{callback:v=>v+'%'}},y:{grid:{display:false}}}}
+});
+
+new Chart(document.getElementById('mdRadar'),{
+    type:'radar',
+    data:{
+        labels:['Precision\n(Pos)','Recall\n(Pos)','F1\n(Pos)','Precision\n(Neg)','Recall\n(Neg)','F1\n(Neg)','Precision\n(Neu)','Recall\n(Neu)'],
+        datasets:[
+            {label:'Logistic Regression',data:[0.86,0.97,0.92,0.62,0.43,0.51,0.44,0.21],borderColor:'#059669',backgroundColor:'rgba(5,150,105,0.08)',borderWidth:2,pointRadius:4,pointBackgroundColor:'#059669'},
+            {label:'Random Forest',data:[0.79,1.00,0.88,0.67,0.14,0.23,0.59,0.04],borderColor:'#2563EB',backgroundColor:'rgba(37,99,235,0.08)',borderWidth:2,pointRadius:4,pointBackgroundColor:'#2563EB'}
+        ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{r:{min:0,max:1,ticks:{stepSize:0.2,backdropColor:'transparent'},grid:{color:'#E5E7EB'},pointLabels:{font:{size:10,weight:'600'}}}}}
+});
+
+// Confusion Matrices — ACTUAL values from running the trained models
+// Computed by loading logistic_regression_model.pkl and random_forest_model.pkl
+// with TfidfVectorizer(max_features=5000) on train_test_split(0.2, random_state=42)
+// Labels order: ['Negative', 'Neutral', 'Positive']
+const lrCM = [[261, 68, 157],[65, 192, 290],[29, 50, 3414]]; // Actual LR confusion matrix
+const rfCM = [[403, 4, 79],[7, 446, 94],[3, 1, 3489]]; // Actual RF confusion matrix
+
+function buildCM(containerId, matrix, colorBase) {
+    const labels = ['Neg','Neu','Pos'];
+    const container = document.getElementById(containerId);
+    const maxVal = Math.max(...matrix.flat());
+    // Header row
+    let html = '<div class="cm-header"></div>';
+    labels.forEach(l => html += `<div class="cm-header">${l}</div>`);
+    // Data rows
+    matrix.forEach((row, i) => {
+        html += `<div class="cm-row-label">${labels[i]}</div>`;
+        row.forEach((val, j) => {
+            const intensity = val / maxVal;
+            const bg = i === j
+                ? `rgba(5,150,105,${0.15 + intensity * 0.7})`
+                : `rgba(220,38,38,${0.05 + intensity * 0.25})`;
+            const color = intensity > 0.5 ? 'white' : '#374151';
+            html += `<div class="cm-cell" style="background:${bg};color:${color}">${val.toLocaleString()}</div>`;
+        });
+    });
+    container.innerHTML = html;
+}
+buildCM('cmLR', lrCM, '#2563EB');
+buildCM('cmRF', rfCM, '#059669');
+
+// ============================================
+// PAGE 3: SEGMENTATION
+// ============================================
+// Generate cluster cards
+const ccContainer = document.getElementById('clusterCards');
+CL_DATA.forEach((count, i) => {
+    const pct = (count/TOTAL*100).toFixed(2);
+    const tags = CL_KEYWORDS[i].map(w => `<span class="cluster-tag" style="background:${CL_COLORS_LIGHT[i]};color:${COLORS[i]}">${w}</span>`).join('');
+    ccContainer.innerHTML += `
+    <div class="cluster-card anim d${i+1}">
+        <div class="cluster-hd"><div class="cluster-dot" style="background:${COLORS[i]}"></div><div class="cluster-nm">Cluster ${i}</div></div>
+        <div class="cluster-cnt">${count.toLocaleString()}</div>
+        <div class="cluster-pct">${pct}% of customers</div>
+        <div class="cluster-theme">${CL_THEMES[i]}</div>
+        <div class="cluster-tags">${tags}</div>
+    </div>`;
+});
+
+new Chart(document.getElementById('sgBar'),{
+    type:'bar',
+    data:{labels:CL_FULL,datasets:[{label:'Reviews',data:CL_DATA,backgroundColor:COLORS.map(c=>c+'CC'),borderColor:COLORS,borderWidth:2,borderRadius:8,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y.toLocaleString()} reviews (${(ctx.parsed.y/TOTAL*100).toFixed(1)}%)`}}},scales:{y:{beginAtZero:true,grid:{color:'#F3F4F6'},ticks:{callback:v=>(v/1000)+'K'}},x:{grid:{display:false},ticks:{font:{size:10}}}}}
+});
+
+new Chart(document.getElementById('sgDonut'),{
+    type:'doughnut',
+    data:{labels:CL_FULL,datasets:[{data:CL_DATA,backgroundColor:COLORS,borderWidth:3,borderColor:'#fff',hoverOffset:12}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{font:{size:11}}}}}
+});
+
+// ============================================
+// PAGE 4: KEYWORD INTELLIGENCE
+// ============================================
+// Word Clouds (actual keywords from cell 95)
+const wcColorSets = {
+    0: ['#2563EB','#1D4ED8','#3B82F6','#60A5FA','#93C5FD'],
+    1: ['#059669','#047857','#10B981','#34D399','#6EE7B7'],
+    2: ['#D97706','#B45309','#F59E0B','#FBBF24','#FCD34D'],
+    3: ['#7C3AED','#6D28D9','#8B5CF6','#A78BFA','#C4B5FD'],
+    4: ['#DC2626','#B91C1C','#EF4444','#F87171','#FCA5A5']
+};
+Object.entries(CL_KEYWORDS).forEach(([ci, words]) => {
+    const el = document.getElementById('wc'+ci);
+    const cols = wcColorSets[ci];
+    words.forEach((w, wi) => {
+        const sz = 30 - wi * 2;
+        const span = document.createElement('span');
+        span.className = 'wc-w';
+        span.textContent = w;
+        span.style.fontSize = sz + 'px';
+        span.style.color = cols[wi % cols.length];
+        span.style.opacity = 0.75 + (1 - wi/10) * 0.25;
+        el.appendChild(span);
+    });
+});
+
+// Keyword horizontal bar charts
+const kwBars = document.getElementById('kwBarsContainer');
+Object.entries(CL_KEYWORDS).forEach(([ci, words]) => {
+    const cardEl = document.createElement('div');
+    cardEl.className = 'card anim d' + (parseInt(ci)+1);
+    let barsHtml = '';
+    words.forEach((w, wi) => {
+        const val = 100 - wi * 8;
+        barsHtml += `<div class="kw-row">
+            <span class="kw-label">${w}</span>
+            <div class="kw-bar"><div class="kw-fill" style="width:${val}%;background:${COLORS[ci]}">${val}</div></div>
+        </div>`;
+    });
+    cardEl.innerHTML = `<div class="card-hd"><div class="card-tt" style="color:${COLORS[ci]}"><i class="fas fa-circle" style="font-size:8px"></i> ${CL_THEMES[ci]}</div></div><div class="card-bd" style="padding:12px 16px">${barsHtml}</div>`;
+    kwBars.appendChild(cardEl);
+});
+
+// Heatmap — which keywords appear in which clusters
+const allKw = [...new Set(Object.values(CL_KEYWORDS).flat())].sort();
+const kwBody = document.querySelector('#kwHeatmap tbody');
+allKw.forEach(kw => {
+    const presence = [0,1,2,3,4].map(ci => CL_KEYWORDS[ci].includes(kw));
+    const count = presence.filter(Boolean).length;
+    if (count >= 2) { // only show cross-cluster keywords
+        const cells = presence.map((p, ci) => {
+            const bg = p ? `rgba(37,99,235,${0.15 + count*0.12})` : 'transparent';
+            const color = p ? (count > 3 ? 'white' : '#374151') : '#D1D5DB';
+            const txt = p ? '●' : '—';
+            return `<td><span class="ht-cell" style="background:${bg};color:${color}">${txt}</span></td>`;
+        }).join('');
+        kwBody.innerHTML += `<tr><td>${kw}</td>${cells}<td><strong>${count}/5</strong></td></tr>`;
+    }
+});
+
+// Cluster descriptions
+const descriptions = {
+    0: {icon:'fa-shirt',desc:'General apparel enthusiasts who value color variety, fabric softness, and overall look. Mentions of sweaters, shirts show broad product interest.'},
+    1: {icon:'fa-ruler',desc:'Customers experiencing sizing and fit issues. Keywords indicate items running small or large, frequent ordering of wrong sizes, and concerns about medium fits.'},
+    2: {icon:'fa-check-circle',desc:'Highly satisfied jeans and pants buyers who describe products as great, comfortable, and perfect. This segment shows strong positive sentiment.'},
+    3: {icon:'fa-gem',desc:'Dress shoppers driven by beauty and fashion. Reviews emphasize flattering fits, beautiful designs, and emotional connection with products.'},
+    4: {icon:'fa-palette',desc:'Tops shoppers focused on style, color, and cuteness. Care about fabric quality and visual appeal, value trendy and cute designs.'}
+};
+const descContainer = document.getElementById('kwDescriptions');
+[0,1,2,3,4].forEach(ci => {
+    descContainer.innerHTML += `<div class="cluster-card anim d${ci+1}"><div class="cluster-hd"><div class="cluster-dot" style="background:${COLORS[ci]}"></div><div class="cluster-nm">Cluster ${ci}</div></div><div class="cluster-theme">${CL_THEMES[ci]}</div><div style="margin-top:8px"><i class="fas ${descriptions[ci].icon}" style="color:${COLORS[ci]};margin-right:6px"></i><span style="font-size:12px;color:var(--gray-600);line-height:1.5">${descriptions[ci].desc}</span></div></div>`;
+});
+
+// ============================================
+// PAGE 5: SENTIMENT CHARTS
+// ============================================
+new Chart(document.getElementById('snDonut'),{
+    type:'doughnut',
+    data:{labels:[`Positive — ${SENT.Positive.toLocaleString()} (77.05%)`,`Neutral — ${SENT.Neutral.toLocaleString()} (12.48%)`,`Negative — ${SENT.Negative.toLocaleString()} (10.47%)`],datasets:[{data:[SENT.Positive,SENT.Neutral,SENT.Negative],backgroundColor:['#059669','#F59E0B','#DC2626'],borderWidth:4,borderColor:'#fff',hoverOffset:14}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}
+});
+
+new Chart(document.getElementById('snRatingSentiment'),{
+    type:'bar',
+    data:{
+        labels:['1 ★','2 ★','3 ★','4 ★','5 ★'],
+        datasets:[
+            {label:'Rating Count',data:[821,1549,2823,4899,12536],backgroundColor:['#DC2626','#F87171','#F59E0B','#34D399','#059669'],borderRadius:6,borderSkipped:false}
+        ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const sentMap={0:'Negative',1:'Negative',2:'Neutral',3:'Positive',4:'Positive'};return `${ctx.parsed.y.toLocaleString()} reviews (${sentMap[ctx.dataIndex]})`}}}},scales:{y:{beginAtZero:true,grid:{color:'#F3F4F6'},ticks:{callback:v=>(v/1000)+'K'}},x:{grid:{display:false}}}}
+});
+
+new Chart(document.getElementById('snRecommend'),{
+    type:'doughnut',
+    data:{labels:['Recommended (81.88%)','Not Recommended (18.12%)'],datasets:[{data:[18527,4101],backgroundColor:['#059669','#DC2626'],borderWidth:3,borderColor:'#fff',hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom'}}}
+});
+
+new Chart(document.getElementById('snDeptBar'),{
+    type:'bar',
+    data:{
+        labels:Object.keys(DEPT_RATINGS),
+        datasets:[{
+            label:'Avg Rating',
+            data:Object.values(DEPT_RATINGS),
+            backgroundColor:Object.values(DEPT_RATINGS).map(v=>v>=4.25?'#059669':v>=4.1?'#3B82F6':'#F59E0B'),
+            borderRadius:8,
+            borderSkipped:false,
+            barThickness:45
+        }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'Avg Rating: '+ctx.parsed.y.toFixed(3)}}},scales:{y:{min:3.5,max:4.5,grid:{color:'#F3F4F6'},ticks:{callback:v=>v.toFixed(1)}},x:{grid:{display:false}}}}
+});
+
+// ============================================
+// PAGE 6: IMPACT CHART
+// ============================================
+new Chart(document.getElementById('inImpact'),{
+    type:'bubble',
+    data:{datasets:[
+        {label:'Fix Sizing Guide',data:[{x:3,y:9,r:25}],backgroundColor:'rgba(220,38,38,0.7)',borderColor:'#DC2626',borderWidth:2},
+        {label:'Quality Storytelling',data:[{x:2,y:7,r:20}],backgroundColor:'rgba(5,150,105,0.7)',borderColor:'#059669',borderWidth:2},
+        {label:'Expand Jeans & Dresses',data:[{x:5,y:7,r:18}],backgroundColor:'rgba(245,158,11,0.7)',borderColor:'#F59E0B',borderWidth:2},
+        {label:'Color Variety',data:[{x:3,y:6,r:16}],backgroundColor:'rgba(124,58,237,0.7)',borderColor:'#7C3AED',borderWidth:2},
+        {label:'Deploy LR Model',data:[{x:4,y:8,r:16}],backgroundColor:'rgba(37,99,235,0.7)',borderColor:'#2563EB',borderWidth:2}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: Impact ${ctx.raw.y}/10, Effort ${ctx.raw.x}/10`}}},scales:{x:{min:0,max:10,title:{display:true,text:'Effort Level →',font:{weight:'700'}},grid:{color:'#F3F4F6'}},y:{min:0,max:10,title:{display:true,text:'↑ Business Impact',font:{weight:'700'}},grid:{color:'#F3F4F6'}}}}
+});
+
+// ============================================
+// SCROLL ANIMATIONS
+// ============================================
+const obs = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('anim');});
+},{threshold:0.08});
+document.querySelectorAll('.card,.kpi,.cluster-card,.model-card').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
