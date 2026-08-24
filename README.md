@@ -1,5 +1,15 @@
 
-
+Reviews
+   ↓
+Preprocessing
+   ↓
+TF-IDF
+   ↓
+Classification
+   ↓
+Clustering
+   ↓
+Power BI Dashboard
 https://github.com/user-attachments/assets/c1905303-7163-4d80-b0d9-0c38c9a5cfed
 
 # AI Customer Feedback Intelligence System
